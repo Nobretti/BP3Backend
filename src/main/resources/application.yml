@@ -1,0 +1,13 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: bp3-process-reducer
+  jackson:
+    default-property-inclusion: non_null
+
+logging:
+  level:
+    com.bp3: DEBUG
+    org.springframework.web: INFO
