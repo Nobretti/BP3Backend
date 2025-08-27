@@ -2,100 +2,187 @@ package com.bp3.backend.services;
 
 import com.bp3.backend.models.*;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ObjectUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.bp3.backend.common.Messages;
+
 @Service
 public class DiagramProcessorService {
 
+    /**
+     * Service that transforms a BPM Diagram into its reduced version removing all non-human entities
+     *
+     * @param diagram composed with Nodes and Edges
+     * @return ProcessDiagramDto diagram as a reduced version with Nodes and Edges
+     */
     public ProcessDiagramDto reduceToHumanTasks(ProcessDiagramDto diagram) {
         if (diagram == null || diagram.getNodes() == null || diagram.getEdges() == null) {
-            throw new IllegalArgumentException("Invalid diagram: nodes and edges cannot be null");
+            throw new IllegalArgumentException(Messages.INVALID_DIAGRAM);
         }
 
-        //Nodes Lookup only Human and End
+        // Create lookup maps for efficient access
         Map<String, NodeDto> nodeMap = diagram.getNodes().stream()
-                .filter(nodeDto -> nodeDto.getType() == NodeType.HumanTask)
                 .collect(Collectors.toMap(NodeDto::getId, node -> node));
+        
+        Map<String, List<EdgeDto>> edgesFromMap = diagram.getEdges().stream()
+                .collect(Collectors.groupingBy(EdgeDto::getFrom));
 
-        //Edge From Lookup
-        Map<String, List<EdgeDto>> edgesMapped =
-                diagram.getEdges()
-                        .stream()
-                        .collect(Collectors.groupingBy(EdgeDto::getFrom));
-
-        //Fetch Start Node
-        Optional<NodeDto> startNode = diagram.getNodes().stream()
+        // Find start and end nodes
+        NodeDto startNode = diagram.getNodes().stream()
                 .filter(node -> node.getType() == NodeType.Start)
-                .findFirst();
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(Messages.START_NODE_NOT_FOUND));
 
-        if (startNode.isEmpty()){
-            throw new RuntimeException("No start Node Provided");
-        }
-
-        //Fetch End Node
-        Optional<NodeDto> endNode = diagram.getNodes().stream()
+        NodeDto endNode = diagram.getNodes().stream()
                 .filter(node -> node.getType() == NodeType.End)
-                .findFirst();
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(Messages.END_NODE_NOT_FOUND));
 
-        if (endNode.isEmpty()){
-            throw new RuntimeException("No End Node Provided");
-        }
+        // Find all human task nodes
+        List<NodeDto> humanTaskNodes = diagram.getNodes().stream()
+                .filter(node -> node.getType() == NodeType.HumanTask)
+                .collect(Collectors.toList());
 
-        List<EdgeDto> reducedEdges = findReachableHumanNodes(startNode.get(), endNode.get(), nodeMap, edgesMapped);
 
-        return new ProcessDiagramDto(List.of(), reducedEdges);
+        return new ProcessDiagramDto(generateReducedNodes(startNode, endNode, humanTaskNodes), 
+            generateReducedEdges(startNode, endNode, humanTaskNodes, nodeMap, edgesFromMap));
     }
 
-    private List<EdgeDto> findReachableHumanNodes(NodeDto startNode,
-                                                  NodeDto endNode,
-                                                  Map<String, NodeDto> nodesToLookup,
-                                                  Map<String, List<EdgeDto>> edgesFromLookup) {
+    /**
+     * Generate Reduced Nodes based on start, end and human nodes
+     *
+     * @param startNode
+     * @param endNode
+     * @param humanTaskNodes
+     * @return
+     */
 
-        List<EdgeDto> reducedEdges = new ArrayList<>();
-        Map<String, String> edgesVisited = new HashMap<>();
+    private List<NodeDto> generateReducedNodes(NodeDto startNode, NodeDto endNode, List<NodeDto> humanTaskNodes){
 
-        Map<String, String> edges = edgesFromLookup.get(startNode.getId())
-                .stream()
-                .collect(Collectors.toMap(EdgeDto::getFrom, EdgeDto::getTo));
+        final List<NodeDto> reducedNodes = new ArrayList<>();
+        // Add start node
+        reducedNodes.add(startNode);
 
-        String newFromEdge = startNode.getId();
+        // Add human task nodes
+        reducedNodes.addAll(humanTaskNodes);
 
-        while(!edges.isEmpty()) {
+        // Add end node
+        reducedNodes.add(endNode);
 
-            Map<String, String> nextEdges = new HashMap<>();
+        return reducedNodes;
+    }
 
-            for (Map.Entry<String, String> currentEdge : edges.entrySet()) {
-                Optional<NodeDto> fromNode = Optional.ofNullable(nodesToLookup.get(currentEdge.getKey()));
-                Optional<String> edgeVisited = Optional.ofNullable(edgesVisited.get(currentEdge.getKey()));
+    /**
+     * 
+     * @param startNode
+     * @param endNode
+     * @param humanTaskNodes
+     * @param nodeMap
+     * @param edgesFromMap
+     * @return
+     */
+    private List<EdgeDto> generateReducedEdges(NodeDto startNode, NodeDto endNode,
+                                               List<NodeDto> humanTaskNodes,
+                                               Map<String, NodeDto> nodeMap,
+                                               Map<String, List<EdgeDto>> edgesFromMap) {
+        List<EdgeDto> result = new ArrayList<>();
+        
+        // If no human tasks, connect start directly to end
+        if (humanTaskNodes.isEmpty()) {
+            if (hasPath(startNode.getId(), endNode.getId(), nodeMap, edgesFromMap)) {
+                result.add(new EdgeDto(startNode.getId(), endNode.getId()));
+            }
+            return result;
+        }
 
-                if (edgeVisited.isEmpty() || !currentEdge.getValue().equals(edgeVisited.get())) {
-                    //If not human and is not end add next edges
-                    if (fromNode.isEmpty()) {
-                        Optional<List<EdgeDto>> nextEdgesLookup = Optional.ofNullable(edgesFromLookup.get(currentEdge.getValue()));
-                        nextEdgesLookup.ifPresent(nextEdgesLookupValue ->
-                                nextEdgesLookupValue.forEach(edgeDto -> nextEdges.put(edgeDto.getFrom(), edgeDto.getTo())));
-                    }
-                    //If human add to the final List
-                    else if (fromNode.get().getType() == NodeType.HumanTask) {
-                        reducedEdges.add(new EdgeDto(newFromEdge, currentEdge.getKey()));
-                        newFromEdge = currentEdge.getKey();
+        // Find the first reachable human task from start
+        NodeDto currentHumanTask = findFirstReachableHumanTask(startNode.getId(), humanTaskNodes, nodeMap, edgesFromMap);
+        if (currentHumanTask != null) {
+            result.add(new EdgeDto(startNode.getId(), currentHumanTask.getId()));
+        } else {
+            // No human tasks reachable from start, connect start to end if possible
+            if (hasPath(startNode.getId(), endNode.getId(), nodeMap, edgesFromMap)) {
+                result.add(new EdgeDto(startNode.getId(), endNode.getId()));
+            }
+            return result;
+        }
 
-                        Optional<List<EdgeDto>> nextEdgesLookup = Optional.ofNullable(edgesFromLookup.get(currentEdge.getValue()));
-                        nextEdgesLookup.ifPresent(nextEdgesLookupValue -> nextEdgesLookupValue.forEach(edgeDto -> nextEdges.put(edgeDto.getFrom(), edgeDto.getTo())));
-                    }
-                }
-                //Keep in Memory Edges Visited
-                edgesVisited.put(currentEdge.getKey(), currentEdge.getValue());
+        // Find paths between human tasks
+        NodeDto previousHumanTask = currentHumanTask;
+        Set<String> processedHumanTasks = new HashSet<>();
+        processedHumanTasks.add(currentHumanTask.getId());
 
-                edges = nextEdges;
+        while (processedHumanTasks.size() < humanTaskNodes.size()) {
+            NodeDto nextHumanTask = findNextReachableHumanTask(previousHumanTask.getId(), humanTaskNodes, 
+                                                              processedHumanTasks, nodeMap, edgesFromMap);
+            if (nextHumanTask != null) {
+                result.add(new EdgeDto(previousHumanTask.getId(), nextHumanTask.getId()));
+                previousHumanTask = nextHumanTask;
+                processedHumanTasks.add(nextHumanTask.getId());
+            } else {
+                break;
             }
         }
 
-        reducedEdges.add(new EdgeDto(newFromEdge, endNode.getId()));
+        // Connect the last human task to end if there's a path
+        if (hasPath(previousHumanTask.getId(), endNode.getId(), nodeMap, edgesFromMap)) {
+            result.add(new EdgeDto(previousHumanTask.getId(), endNode.getId()));
+        }
 
-        return reducedEdges;
+        return result;
+    }
+
+    private NodeDto findFirstReachableHumanTask(String startId, List<NodeDto> humanTaskNodes,
+                                               Map<String, NodeDto> nodeMap,
+                                               Map<String, List<EdgeDto>> edgesFromMap) {
+        for (NodeDto humanTask : humanTaskNodes) {
+            if (hasPath(startId, humanTask.getId(), nodeMap, edgesFromMap)) {
+                return humanTask;
+            }
+        }
+        return null;
+    }
+
+    private NodeDto findNextReachableHumanTask(String fromId, List<NodeDto> humanTaskNodes,
+                                              Set<String> processedTasks,
+                                              Map<String, NodeDto> nodeMap,
+                                              Map<String, List<EdgeDto>> edgesFromMap) {
+        for (NodeDto humanTask : humanTaskNodes) {
+            if (!processedTasks.contains(humanTask.getId()) && 
+                hasPath(fromId, humanTask.getId(), nodeMap, edgesFromMap)) {
+                return humanTask;
+            }
+        }
+        return null;
+    }
+
+    private boolean hasPath(String fromId, String toId, Map<String, NodeDto> nodeMap,
+                           Map<String, List<EdgeDto>> edgesFromMap) {
+        Set<String> visited = new HashSet<>();
+        Queue<String> queue = new LinkedList<>();
+        queue.add(fromId);
+        visited.add(fromId);
+
+        while (!queue.isEmpty()) {
+            String current = queue.poll();
+            
+            if (current.equals(toId)) {
+                return true;
+            }
+
+            List<EdgeDto> edges = edgesFromMap.get(current);
+            if (edges != null) {
+                for (EdgeDto edge : edges) {
+                    String next = edge.getTo();
+                    if (!visited.contains(next)) {
+                        visited.add(next);
+                        queue.add(next);
+                    }
+                }
+            }
+        }
+        return false;
     }
 }
