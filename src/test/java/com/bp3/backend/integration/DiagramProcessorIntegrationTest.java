@@ -290,7 +290,7 @@ class DiagramProcessorIntegrationTest {
                 .andExpect(jsonPath("$.nodes").isArray())
                 .andExpect(jsonPath("$.nodes.length()").value(5))
                 .andExpect(jsonPath("$.edges").isArray())
-                .andExpect(jsonPath("$.edges.length()").value(3))
+                .andExpect(jsonPath("$.edges.length()").value(4))
                 .andExpect(jsonPath("$.nodes[?(@.id == '0' && @.type == 'Start')]").exists())
                 .andExpect(jsonPath("$.nodes[?(@.id == '2' && @.type == 'HumanTask')]").exists())
                 .andExpect(jsonPath("$.nodes[?(@.id == '4' && @.type == 'HumanTask')]").exists())
@@ -298,7 +298,8 @@ class DiagramProcessorIntegrationTest {
                 .andExpect(jsonPath("$.nodes[?(@.id == '8' && @.type == 'End')]").exists())
                 .andExpect(jsonPath("$.edges[?(@.from == '0' && @.to == '2')]").exists())
                 .andExpect(jsonPath("$.edges[?(@.from == '2' && @.to == '4')]").exists())
-                .andExpect(jsonPath("$.edges[?(@.from == '4' && @.to == '8')]").exists());
+                .andExpect(jsonPath("$.edges[?(@.from == '4' && @.to == '5')]").exists())
+                .andExpect(jsonPath("$.edges[?(@.from == '5' && @.to == '8')]").exists());
     }
 
     @Test

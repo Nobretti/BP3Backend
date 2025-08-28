@@ -8,7 +8,7 @@ The application processes BPMN-style process diagrams and reduces them to show o
 
 ## API Endpoints
 
-### 1. Reduce Diagram from JSON Body
+### Reduce Diagram from JSON Body
 **POST** `/api/diagramprocess/reduce`
 
 Reduces a process diagram provided in the request body.
@@ -115,9 +115,6 @@ Reduces a process diagram provided in the request body.
 }
 ```
 
-### 2. Reduce Diagram from File Upload
-**POST** `/api/diagramprocess/reduce/file`
-
 Reduces a process diagram from an uploaded JSON file.
 
 **Request:** Multipart form data with a file parameter named "file" containing the JSON diagram.
@@ -143,10 +140,6 @@ The reduction algorithm:
 
 ## Running the Application
 
-### Prerequisites
-- Java 21
-- Gradle
-
 ### Build and Run
 ```bash
 ./gradlew build
@@ -162,17 +155,11 @@ The application will start on port 8080.
 
 ## Example Usage
 
-1. **Using curl with JSON body:**
+**Using curl with JSON body:**
 ```bash
 curl -X POST http://localhost:8080/api/diagramprocess/reduce \
   -H "Content-Type: application/json" \
   -d @sample-diagram.json
-```
-
-2. **Using curl with file upload:**
-```bash
-curl -X POST http://localhost:8080/api/diagramprocess/reduce/file \
-  -F "file=@sample-diagram.json"
 ```
 
 ## Error Handling
@@ -182,6 +169,6 @@ The API returns appropriate HTTP status codes:
 - **400 Bad Request**: Invalid input (missing start/end nodes, malformed JSON)
 - **500 Internal Server Error**: Unexpected server errors
 
-## Sample Files
+## Use Swagger
+Check http://localhost:8080/swagger-ui.html
 
-- `sample-diagram.json`: Example input diagram matching the problem description
