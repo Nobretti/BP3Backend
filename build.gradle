@@ -1,6 +1,15 @@
 plugins {
-	id 'org.springframework.boot' version '3.2.5'
-	id 'java'
+    id 'org.springframework.boot' version '3.2.5'
+    id 'java'
+    id 'jacoco'  // For code coverage
+}
+
+//code coverage configuration
+jacocoTestReport {
+    reports {
+        xml.required = true
+        html.required = true
+    }
 }
 
 group = 'com.bp3'

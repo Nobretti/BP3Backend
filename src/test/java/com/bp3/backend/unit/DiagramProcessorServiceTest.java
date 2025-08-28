@@ -3,24 +3,22 @@ package com.bp3.backend.unit;
 import com.bp3.backend.common.MessagesTest;
 import com.bp3.backend.models.*;
 import com.bp3.backend.services.DiagramProcessorService;
+import com.bp3.backend.services.DiagramProcessorServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@ExtendWith(MockitoExtension.class)
 class DiagramProcessorServiceTest {
 
     private DiagramProcessorService service;
 
     @BeforeEach
     void setUp() {
-        service = new DiagramProcessorService();
+        service = new DiagramProcessorServiceImpl();
     }
 
     @Test
