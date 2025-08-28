@@ -13,32 +13,8 @@ import java.util.List;
  * and output (reduced diagram) of the diagram reduction process.</p>
  * 
  * <p>The diagram structure consists of:</p>
- * <ul>
- *   <li><strong>nodes</strong>: List of process nodes (Start, End, HumanTask, ServiceTask, Gateway)</li>
- *   <li><strong>edges</strong>: List of connections between nodes defining the flow</li>
- * </ul>
- * 
- * <p>Validation ensures that both nodes and edges are not null and contain valid data.</p>
- * 
- * <p>Example usage:</p>
- * <pre>
- * ProcessDiagramDto diagram = new ProcessDiagramDto();
- * diagram.setNodes(Arrays.asList(
- *     new NodeDto("0", "Start", NodeType.Start),
- *     new NodeDto("1", "Task A", NodeType.HumanTask),
- *     new NodeDto("2", "End", NodeType.End)
- * ));
- * diagram.setEdges(Arrays.asList(
- *     new EdgeDto("0", "1"),
- *     new EdgeDto("1", "2")
- * ));
- * </pre>
- * 
- * @author BP3 Backend Team
- * @version 1.0
- * @see NodeDto
- * @see EdgeDto
- * @see NodeType
+ *   List of process nodes (Start, End, HumanTask, ServiceTask, Gateway)
+ *   List of connections between nodes defining the flow
  */
 public class ProcessDiagramDto {
     
@@ -47,15 +23,6 @@ public class ProcessDiagramDto {
      * 
      * <p>Each node represents a step in the process workflow and must have a unique ID,
      * a descriptive name, and a specific type that determines its role in the process.</p>
-     * 
-     * <p>Required node types for a valid diagram:</p>
-     * <ul>
-     *   <li>Exactly one <strong>Start</strong> node</li>
-     *   <li>Exactly one <strong>End</strong> node</li>
-     *   <li>Zero or more <strong>HumanTask</strong> nodes</li>
-     *   <li>Zero or more <strong>ServiceTask</strong> nodes (will be removed in reduction)</li>
-     *   <li>Zero or more <strong>Gateway</strong> nodes (will be removed in reduction)</li>
-     * </ul>
      */
     @NotNull(message = "Nodes list cannot be null")
     @Valid
@@ -67,15 +34,6 @@ public class ProcessDiagramDto {
      * 
      * <p>Each edge represents a transition between two nodes and defines the flow
      * of the process. Edges must reference valid node IDs that exist in the nodes list.</p>
-     * 
-     * <p>Edge properties:</p>
-     * <ul>
-     *   <li><strong>from</strong>: Source node ID (must exist in nodes list)</li>
-     *   <li><strong>to</strong>: Target node ID (must exist in nodes list)</li>
-     * </ul>
-     * 
-     * <p>The diagram must form a valid directed graph with at least one path
-     * from the start node to the end node.</p>
      */
     @NotNull(message = "Edges list cannot be null")
     @Valid

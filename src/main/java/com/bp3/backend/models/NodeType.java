@@ -1,21 +1,7 @@
 package com.bp3.backend.models;
 
 /**
- * Enumeration of node types within a BPMN process diagram.
- * 
- * <p>This enum defines the different types of nodes that can exist in a process diagram
- * and their role in the diagram reduction process. Each node type has specific characteristics
- * that determine how it is handled during the reduction algorithm.</p>
- * 
- * <p>Node types are categorized as follows:</p>
- * <ul>
- *   <li><strong>Required nodes</strong>: Must be present in every valid diagram</li>
- *   <li><strong>Preserved nodes</strong>: Kept in the reduced diagram</li>
- *   <li><strong>Removed nodes</strong>: Eliminated during reduction</li>
- * </ul>
- * 
- * @author BP3 Backend Team
- * @version 1.0
+ * The different types of Nodes within a BPM process diagram.
  */
 public enum NodeType {
     

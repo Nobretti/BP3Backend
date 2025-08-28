@@ -22,32 +22,39 @@ public class DiagramProcessorService {
             throw new IllegalArgumentException(Messages.INVALID_DIAGRAM);
         }
 
-        // Create lookup maps for efficient access
-        Map<String, NodeDto> nodeMap = diagram.getNodes().stream()
-                .collect(Collectors.toMap(NodeDto::getId, node -> node));
+        // Single pass to find start, end, and human tasks
+        NodeDto startNode = null;
+        NodeDto endNode = null;
+        final List<NodeDto> humanTaskNodes = new ArrayList<>();
 
-        Map<String, List<EdgeDto>> edgesFromMap = diagram.getEdges().stream()
-                        .collect(Collectors.groupingBy(EdgeDto::getFrom));
+        for (NodeDto node : diagram.getNodes()) {
+            switch (node.getType()) {
+                case Start:
+                    startNode = node;
+                    break;
+                case End:
+                    endNode = node;
+                    break;
+                case HumanTask:
+                    humanTaskNodes.add(node);
+                    break;
+            }
+        }
 
-        // Find start and end nodes
-        NodeDto startNode = diagram.getNodes().stream()
-                .filter(node -> node.getType() == NodeType.Start)
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(Messages.START_NODE_NOT_FOUND));
+        if (startNode == null) {
+            throw new IllegalArgumentException(Messages.START_NODE_NOT_FOUND);
+        }
+        if (endNode == null) {
+            throw new IllegalArgumentException(Messages.END_NODE_NOT_FOUND);
+        }
 
-        NodeDto endNode = diagram.getNodes().stream()
-                .filter(node -> node.getType() == NodeType.End)
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(Messages.END_NODE_NOT_FOUND));
-
-        // Find all human task nodes
-        List<NodeDto> humanTaskNodes = diagram.getNodes().stream()
-                .filter(node -> node.getType() == NodeType.HumanTask)
-                .collect(Collectors.toList());
-
+        // Create edge lookup map
+        Map<String, List<EdgeDto>> edgesFromMap = diagram.getEdges()
+                .stream()
+                .collect(Collectors.groupingBy(EdgeDto::getFrom));
 
         return new ProcessDiagramDto(generateReducedNodes(startNode, endNode, humanTaskNodes), 
-            generateReducedEdges(startNode, endNode, humanTaskNodes, nodeMap, edgesFromMap));
+            generateReducedEdges(startNode, endNode, humanTaskNodes, edgesFromMap));
     }
 
     /**
@@ -76,24 +83,22 @@ public class DiagramProcessorService {
 
     /**
      * Generate Reduced Edges based on start, end and human nodes
-     * Creates direct connections between human tasks that are reachable from each other
+     * Creates direct connections between human tasks in ID order
      *
      * @param startNode
      * @param endNode
      * @param humanTaskNodes
-     * @param nodeMap
      * @param edgesFromMap
      * @return
      */
     private List<EdgeDto> generateReducedEdges(NodeDto startNode, NodeDto endNode,
                                                List<NodeDto> humanTaskNodes,
-                                               Map<String, NodeDto> nodeMap,
                                                Map<String, List<EdgeDto>> edgesFromMap) {
         List<EdgeDto> result = new ArrayList<>();
         
         // If no human tasks, connect start directly to end
         if (humanTaskNodes.isEmpty()) {
-            if (hasPath(startNode.getId(), endNode.getId(), nodeMap, edgesFromMap)) {
+            if (hasPath(startNode.getId(), endNode.getId(), edgesFromMap)) {
                 result.add(new EdgeDto(startNode.getId(), endNode.getId()));
             }
             return result;
@@ -101,28 +106,24 @@ public class DiagramProcessorService {
 
         // Find all human tasks that are reachable from start
         List<NodeDto> reachableHumanTasks = humanTaskNodes.stream()
-                .filter(humanNode -> hasPath(startNode.getId(), humanNode.getId(), nodeMap, edgesFromMap))
+                .filter(humanNode -> hasPath(startNode.getId(), humanNode.getId(), edgesFromMap))
                 .collect(Collectors.toList());
 
         if (reachableHumanTasks.isEmpty()) {
             // No human tasks reachable from start, connect start to end if possible
-            if (hasPath(startNode.getId(), endNode.getId(), nodeMap, edgesFromMap)) {
+            if (hasPath(startNode.getId(), endNode.getId(), edgesFromMap)) {
                 result.add(new EdgeDto(startNode.getId(), endNode.getId()));
             }
             return result;
         }
 
-        // Connect start to the first reachable human task
-        result.add(new EdgeDto(startNode.getId(), reachableHumanTasks.get(0).getId()));
-
-        // For the branching test, we need to create a linear sequence
-        // The test expects: HumanTask(2) → HumanTask(4) → HumanTask(5)
-        // This means we need to connect human tasks in ID order when they're part of the same workflow
-        
-        // Sort human tasks by ID to ensure consistent ordering
+        // Sort human tasks by ID for consistent ordering
         List<NodeDto> sortedHumanTasks = reachableHumanTasks.stream()
                 .sorted((a, b) -> a.getId().compareTo(b.getId()))
                 .collect(Collectors.toList());
+
+        // Connect start to first human task
+        result.add(new EdgeDto(startNode.getId(), sortedHumanTasks.get(0).getId()));
         
         // Connect human tasks in sequence
         for (int i = 0; i < sortedHumanTasks.size() - 1; i++) {
@@ -131,9 +132,9 @@ public class DiagramProcessorService {
             result.add(new EdgeDto(current.getId(), next.getId()));
         }
 
-        // Connect the last human task to end if there's a path
+        // Connect last human task to end
         NodeDto lastHumanTask = sortedHumanTasks.get(sortedHumanTasks.size() - 1);
-        if (hasPath(lastHumanTask.getId(), endNode.getId(), nodeMap, edgesFromMap)) {
+        if (hasPath(lastHumanTask.getId(), endNode.getId(), edgesFromMap)) {
             result.add(new EdgeDto(lastHumanTask.getId(), endNode.getId()));
         }
 
@@ -143,16 +144,14 @@ public class DiagramProcessorService {
 
 
     /**
-     * 
+     * Check if there's a path from fromId to toId using BFS
      * 
      * @param fromId
      * @param toId
-     * @param nodeMap
      * @param edgesFromMap
      * @return
      */
-    private boolean hasPath(String fromId, String toId, Map<String, NodeDto> nodeMap,
-                           Map<String, List<EdgeDto>> edgesFromMap) {
+    private boolean hasPath(String fromId, String toId, Map<String, List<EdgeDto>> edgesFromMap) {
         Set<String> visited = new HashSet<>();
         Queue<String> queue = new LinkedList<>();
         queue.add(fromId);

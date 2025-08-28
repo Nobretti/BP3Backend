@@ -16,11 +16,6 @@ import org.springframework.web.bind.annotation.*;
  * This controller provides endpoints for reducing process diagrams by removing
  * non-human steps (ServiceTask, Gateway) and keeping only human tasks, start,
  * and end nodes while maintaining the logical flow between them.</p>
- * 
- * The controller handles:
- *  - JSON payload validation
- *  - Request/Response logging
- *  - Error handling and appropriate HTTP status codes
  */
 @RestController
 @RequestMapping("/api/diagramprocess")
