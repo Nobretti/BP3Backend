@@ -148,10 +148,30 @@ The reduction algorithm:
 
 The application will start on port 8080.
 
+### Frontend Integration
+
+The backend is configured to support CORS requests from the Angular frontend running on `http://localhost:4200`. The following origins are allowed:
+
+- `http://localhost:4200`
+- `http://127.0.0.1:4200`
+
+**CORS Configuration:**
+- All HTTP methods are allowed (GET, POST, PUT, DELETE, OPTIONS, etc.)
+- All headers are allowed
+- Credentials are supported
+- Preflight requests are cached for 1 hour (3600 seconds)
+
 ### Running Tests
 ```bash
 ./gradlew test
 ```
+
+**CORS Testing:**
+The project includes comprehensive CORS integration tests that verify:
+- Preflight OPTIONS requests are handled correctly
+- Actual requests include proper CORS headers
+- Unauthorized origins are rejected
+- Both localhost and 127.0.0.1 origins are supported
 
 ## Example Usage
 
@@ -172,3 +192,5 @@ The API returns appropriate HTTP status codes:
 ## Use Swagger
 Check http://localhost:8080/swagger-ui.html
 
+## Check Jacoco
+Check Jacoco Report for code analysis

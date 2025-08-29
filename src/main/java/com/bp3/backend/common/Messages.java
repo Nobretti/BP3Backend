@@ -6,15 +6,11 @@ package com.bp3.backend.common;
  * This class contains all string literals used throughout the application
  * to ensure consistency and ease of maintenance.
  */
+@Component
 public final class Messages {
-
-    private Messages() {
-        // Utility class - prevent instantiation
-    }
 
     // Exception Messages
     public static final String UNEXPECTED_ERROR = "Unexpected error";
-    public static final String INVALID_STATE = "Invalid state";
     public static final String NO_HUMAN_TASKS_FOUND = "No human tasks found in the diagram";
     public static final String INVALID_DIAGRAM_STRUCTURE = "Invalid diagram structure";
     public static final String MISSING_REQUIRED_NODES = "Missing required nodes (Start/End)";

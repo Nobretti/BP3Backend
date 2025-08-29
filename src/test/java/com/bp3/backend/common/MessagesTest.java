@@ -8,10 +8,6 @@ package com.bp3.backend.common;
  */
 public final class MessagesTest {
 
-    private MessagesTest() {
-        // Utility class - prevent instantiation
-    }
-
     //Exception Messages
     public static final String NO_START_NODE_FOUND = "No start node found";
     public static final String UNEXPECTED_ERROR = "Unexpected error";
@@ -19,10 +15,6 @@ public final class MessagesTest {
     // Node Names
     public static final String START_NODE_NAME = "Start";
     public static final String END_NODE_NAME = "End";
-
-    // Node IDs
-    public static final String START_NODE_ID = "0";
-    public static final String END_NODE_ID = "1";
 
     // Test Data Names
     public static final String TEST_NODE_A = "A";
