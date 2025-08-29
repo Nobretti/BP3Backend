@@ -1,5 +1,7 @@
 package com.bp3.backend.common;
 
+import org.springframework.stereotype.Component;
+
 /**
  * Centralized message constants for the application.
  * 
