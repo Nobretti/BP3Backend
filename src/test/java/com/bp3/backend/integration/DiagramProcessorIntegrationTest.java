@@ -421,6 +421,66 @@ class DiagramProcessorIntegrationTest {
     }
 
     @Test
+    void testOnlyStartAndEndNodes_WithDirectEdge() throws Exception {
+        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+
+        String inputJson = """
+            {
+              "nodes": [
+                { "id": "0", "name": "Start", "type": "Start" },
+                { "id": "1", "name": "End", "type": "End" }
+              ],
+              "edges": [
+                { "from": "0", "to": "1" }
+              ]
+            }
+            """;
+
+        mockMvc.perform(post("/api/diagramprocess/reduce")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(inputJson))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.nodes.length()").value(2))
+                .andExpect(jsonPath("$.edges.length()").value(1))
+                .andExpect(jsonPath("$.nodes[?(@.id == '0' && @.type == 'Start')]").exists())
+                .andExpect(jsonPath("$.nodes[?(@.id == '1' && @.type == 'End')]").exists())
+                .andExpect(jsonPath("$.edges[?(@.from == '0' && @.to == '1')]").exists());
+    }
+
+    @Test
+    void testOnlyStartAndEndNodes_WithServicesBetween() throws Exception {
+        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+
+        String inputJson = """
+            {
+              "nodes": [
+                { "id": "0", "name": "Start", "type": "Start" },
+                { "id": "10", "name": "S1", "type": "ServiceTask" },
+                { "id": "11", "name": "S2", "type": "ServiceTask" },
+                { "id": "1", "name": "End", "type": "End" }
+              ],
+              "edges": [
+                { "from": "0", "to": "10" },
+                { "from": "10", "to": "11" },
+                { "from": "11", "to": "1" }
+              ]
+            }
+            """;
+
+        mockMvc.perform(post("/api/diagramprocess/reduce")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(inputJson))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.nodes.length()").value(2))
+                .andExpect(jsonPath("$.edges.length()").value(1))
+                .andExpect(jsonPath("$.nodes[?(@.id == '0' && @.type == 'Start')]").exists())
+                .andExpect(jsonPath("$.nodes[?(@.id == '1' && @.type == 'End')]").exists())
+                .andExpect(jsonPath("$.edges[?(@.from == '0' && @.to == '1')]").exists());
+    }
+
+    @Test
     void testInvalidInput_MissingStartNode() throws Exception {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
 

@@ -1,6 +1,5 @@
 package com.bp3.backend.unit;
 
-import com.bp3.backend.common.MessagesTest;
 import com.bp3.backend.models.*;
 import com.bp3.backend.services.DiagramProcessorService;
 import com.bp3.backend.services.DiagramProcessorServiceImpl;
@@ -25,20 +24,20 @@ class DiagramProcessorServiceTest {
     void testReduceToHumanTasks_SimpleCase() {
         // Create test diagram: Start -> A (Service) -> B (Human) -> C (Service) -> D (Human) -> End
         List<NodeDto> nodes = Arrays.asList(
-            new NodeDto(MessagesTest.TEST_NODE_ID_0, MessagesTest.START_NODE_NAME, NodeType.Start),
-            new NodeDto(MessagesTest.TEST_NODE_ID_1, MessagesTest.TEST_NODE_A, NodeType.ServiceTask),
-            new NodeDto(MessagesTest.TEST_NODE_ID_2, MessagesTest.TEST_NODE_B, NodeType.HumanTask),
-            new NodeDto(MessagesTest.TEST_NODE_ID_3, MessagesTest.TEST_NODE_C, NodeType.ServiceTask),
-            new NodeDto(MessagesTest.TEST_NODE_ID_4, MessagesTest.TEST_NODE_D, NodeType.HumanTask),
-            new NodeDto(MessagesTest.TEST_NODE_ID_5, MessagesTest.END_NODE_NAME, NodeType.End)
+            new NodeDto("0", "Start", NodeType.Start),
+            new NodeDto("1", "A", NodeType.ServiceTask),
+            new NodeDto("2", "B", NodeType.HumanTask),
+            new NodeDto("3", "C", NodeType.ServiceTask),
+            new NodeDto("4", "D", NodeType.HumanTask),
+            new NodeDto("5", "End", NodeType.End)
         );
 
         List<EdgeDto> edges = Arrays.asList(
-            new EdgeDto(MessagesTest.TEST_NODE_ID_0, MessagesTest.TEST_NODE_ID_1), // Start -> A
-            new EdgeDto(MessagesTest.TEST_NODE_ID_1, MessagesTest.TEST_NODE_ID_2), // A -> B
-            new EdgeDto(MessagesTest.TEST_NODE_ID_2, MessagesTest.TEST_NODE_ID_3), // B -> C
-            new EdgeDto(MessagesTest.TEST_NODE_ID_3, MessagesTest.TEST_NODE_ID_4), // C -> D
-            new EdgeDto(MessagesTest.TEST_NODE_ID_4, MessagesTest.TEST_NODE_ID_5)  // D -> End
+            new EdgeDto("0", "1"), // Start -> A
+            new EdgeDto("1", "2"), // A -> B
+            new EdgeDto("2", "3"), // B -> C
+            new EdgeDto("3", "4"), // C -> D
+            new EdgeDto("4", "5")  // D -> End
         );
 
         ProcessDiagramDto input = new ProcessDiagramDto(nodes, edges);
@@ -49,31 +48,31 @@ class DiagramProcessorServiceTest {
         assertEquals(3, result.getEdges().size());
 
         // Check nodes
-        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals(MessagesTest.TEST_NODE_ID_0) && n.getType() == NodeType.Start));
-        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals(MessagesTest.TEST_NODE_ID_2) && n.getType() == NodeType.HumanTask));
-        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals(MessagesTest.TEST_NODE_ID_4) && n.getType() == NodeType.HumanTask));
-        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals(MessagesTest.TEST_NODE_ID_5) && n.getType() == NodeType.End));
+        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals("0") && n.getType() == NodeType.Start));
+        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals("2") && n.getType() == NodeType.HumanTask));
+        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals("4") && n.getType() == NodeType.HumanTask));
+        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals("5") && n.getType() == NodeType.End));
 
         // Check edges
-        assertTrue(result.getEdges().stream().anyMatch(e -> e.getFrom().equals(MessagesTest.TEST_NODE_ID_0) && e.getTo().equals(MessagesTest.TEST_NODE_ID_2)));
-        assertTrue(result.getEdges().stream().anyMatch(e -> e.getFrom().equals(MessagesTest.TEST_NODE_ID_2) && e.getTo().equals(MessagesTest.TEST_NODE_ID_4)));
-        assertTrue(result.getEdges().stream().anyMatch(e -> e.getFrom().equals(MessagesTest.TEST_NODE_ID_4) && e.getTo().equals(MessagesTest.TEST_NODE_ID_5)));
+        assertTrue(result.getEdges().stream().anyMatch(e -> e.getFrom().equals("0") && e.getTo().equals("2")));
+        assertTrue(result.getEdges().stream().anyMatch(e -> e.getFrom().equals("2") && e.getTo().equals("4")));
+        assertTrue(result.getEdges().stream().anyMatch(e -> e.getFrom().equals("4") && e.getTo().equals("5")));
     }
 
     @Test
     void testReduceToHumanTasks_NoHumanTasks() {
         // Create test diagram: Start -> A (Service) -> B (Service) -> End
         List<NodeDto> nodes = Arrays.asList(
-            new NodeDto(MessagesTest.TEST_NODE_ID_0, MessagesTest.START_NODE_NAME, NodeType.Start),
-            new NodeDto(MessagesTest.TEST_NODE_ID_1, MessagesTest.TEST_NODE_A, NodeType.ServiceTask),
-            new NodeDto(MessagesTest.TEST_NODE_ID_2, MessagesTest.TEST_NODE_B, NodeType.ServiceTask),
-            new NodeDto(MessagesTest.TEST_NODE_ID_3, MessagesTest.END_NODE_NAME, NodeType.End)
+            new NodeDto("0", "Start", NodeType.Start),
+            new NodeDto("1", "A", NodeType.ServiceTask),
+            new NodeDto("2", "B", NodeType.ServiceTask),
+            new NodeDto("3", "End", NodeType.End)
         );
 
         List<EdgeDto> edges = Arrays.asList(
-            new EdgeDto(MessagesTest.TEST_NODE_ID_0, MessagesTest.TEST_NODE_ID_1), // Start -> A
-            new EdgeDto(MessagesTest.TEST_NODE_ID_1, MessagesTest.TEST_NODE_ID_2), // A -> B
-            new EdgeDto(MessagesTest.TEST_NODE_ID_2, MessagesTest.TEST_NODE_ID_3)  // B -> End
+            new EdgeDto("0", "1"), // Start -> A
+            new EdgeDto("1", "2"), // A -> B
+            new EdgeDto("2", "3")  // B -> End
         );
 
         ProcessDiagramDto input = new ProcessDiagramDto(nodes, edges);
@@ -84,35 +83,82 @@ class DiagramProcessorServiceTest {
         assertEquals(1, result.getEdges().size());
 
         // Check nodes
-        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals(MessagesTest.TEST_NODE_ID_0) && n.getType() == NodeType.Start));
-        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals(MessagesTest.TEST_NODE_ID_3) && n.getType() == NodeType.End));
+        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals("0") && n.getType() == NodeType.Start));
+        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals("3") && n.getType() == NodeType.End));
 
         // Check edges
-        assertTrue(result.getEdges().stream().anyMatch(e -> e.getFrom().equals(MessagesTest.TEST_NODE_ID_0) && e.getTo().equals(MessagesTest.TEST_NODE_ID_3)));
+        assertTrue(result.getEdges().stream().anyMatch(e -> e.getFrom().equals("0") && e.getTo().equals("3")));
+    }
+
+    @Test
+    void testReduceToHumanTasks_OnlyStartAndEndNodes() {
+        // Diagram with only Start and End nodes, no human tasks, direct edge
+        List<NodeDto> nodes = Arrays.asList(
+            new NodeDto("0", "Start", NodeType.Start),
+            new NodeDto("1", "End", NodeType.End)
+        );
+
+        List<EdgeDto> edges = Arrays.asList(
+            new EdgeDto("0", "1")
+        );
+
+        ProcessDiagramDto input = new ProcessDiagramDto(nodes, edges);
+        ProcessDiagramDto result = service.reduceToHumanTasks(input);
+
+        // Expected: Start -> End only
+        assertEquals(2, result.getNodes().size());
+        assertEquals(1, result.getEdges().size());
+        assertTrue(result.getEdges().stream().anyMatch(e -> e.getFrom().equals("0") && e.getTo().equals("1")));
+    }
+
+    @Test
+    void testReduceToHumanTasks_OnlyStartAndEndNodes_WithServicesBetween() {
+        // Diagram with Start -> Service -> Service -> End, no humans
+        List<NodeDto> nodes = Arrays.asList(
+            new NodeDto("0", "Start", NodeType.Start),
+            new NodeDto("10", "S1", NodeType.ServiceTask),
+            new NodeDto("11", "S2", NodeType.ServiceTask),
+            new NodeDto("1", "End", NodeType.End)
+        );
+
+        List<EdgeDto> edges = Arrays.asList(
+            new EdgeDto("0", "10"),
+            new EdgeDto("10", "11"),
+            new EdgeDto("0", "1"),
+            new EdgeDto("1", "2")
+        );
+
+        ProcessDiagramDto input = new ProcessDiagramDto(nodes, edges);
+        ProcessDiagramDto result = service.reduceToHumanTasks(input);
+
+        // Expected: Start -> End only
+        assertEquals(2, result.getNodes().size());
+        assertEquals(1, result.getEdges().size());
+        assertTrue(result.getEdges().stream().anyMatch(e -> e.getFrom().equals("0") && e.getTo().equals("1")));
     }
 
     @Test
     void testReduceToHumanTasks_ComplexPath() {
         // Create test diagram with multiple paths
         List<NodeDto> nodes = Arrays.asList(
-            new NodeDto(MessagesTest.TEST_NODE_ID_0, MessagesTest.START_NODE_NAME, NodeType.Start),
-            new NodeDto(MessagesTest.TEST_NODE_ID_1, MessagesTest.TEST_NODE_A, NodeType.ServiceTask),
-            new NodeDto(MessagesTest.TEST_NODE_ID_2, MessagesTest.TEST_NODE_B, NodeType.HumanTask),
-            new NodeDto(MessagesTest.TEST_NODE_ID_3, MessagesTest.TEST_NODE_C, NodeType.ServiceTask),
-            new NodeDto(MessagesTest.TEST_NODE_ID_4, MessagesTest.TEST_NODE_D, NodeType.HumanTask),
-            new NodeDto(MessagesTest.TEST_NODE_ID_5, MessagesTest.TEST_NODE_E, NodeType.ServiceTask),
-            new NodeDto(MessagesTest.TEST_NODE_ID_6, MessagesTest.TEST_NODE_F, NodeType.HumanTask),
-            new NodeDto(MessagesTest.TEST_NODE_ID_7, MessagesTest.END_NODE_NAME, NodeType.End)
+            new NodeDto("0", "Start", NodeType.Start),
+            new NodeDto("1", "A", NodeType.ServiceTask),
+            new NodeDto("2", "B", NodeType.HumanTask),
+            new NodeDto("3", "C", NodeType.ServiceTask),
+            new NodeDto("4", "D", NodeType.HumanTask),
+            new NodeDto("5", "E", NodeType.ServiceTask),
+            new NodeDto("6", "F", NodeType.HumanTask),
+            new NodeDto("7", "End", NodeType.End)
         );
 
         List<EdgeDto> edges = Arrays.asList(
-            new EdgeDto(MessagesTest.TEST_NODE_ID_0, MessagesTest.TEST_NODE_ID_1), // Start -> A
-            new EdgeDto(MessagesTest.TEST_NODE_ID_1, MessagesTest.TEST_NODE_ID_2), // A -> B
-            new EdgeDto(MessagesTest.TEST_NODE_ID_2, MessagesTest.TEST_NODE_ID_3), // B -> C
-            new EdgeDto(MessagesTest.TEST_NODE_ID_3, MessagesTest.TEST_NODE_ID_4), // C -> D
-            new EdgeDto(MessagesTest.TEST_NODE_ID_4, MessagesTest.TEST_NODE_ID_5), // D -> E
-            new EdgeDto(MessagesTest.TEST_NODE_ID_5, MessagesTest.TEST_NODE_ID_6), // E -> F
-            new EdgeDto(MessagesTest.TEST_NODE_ID_6, MessagesTest.TEST_NODE_ID_7)  // F -> End
+            new EdgeDto("0", "1"), // Start -> A
+            new EdgeDto("1", "2"), // A -> B
+            new EdgeDto("2", "3"), // B -> C
+            new EdgeDto("3", "4"), // C -> D
+            new EdgeDto("4", "5"), // D -> E
+            new EdgeDto("5", "6"), // E -> F
+            new EdgeDto("6", "7")  // F -> End
         );
 
         ProcessDiagramDto input = new ProcessDiagramDto(nodes, edges);
@@ -123,30 +169,30 @@ class DiagramProcessorServiceTest {
         assertEquals(4, result.getEdges().size());
 
         // Check nodes
-        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals(MessagesTest.TEST_NODE_ID_0) && n.getType() == NodeType.Start));
-        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals(MessagesTest.TEST_NODE_ID_2) && n.getType() == NodeType.HumanTask));
-        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals(MessagesTest.TEST_NODE_ID_4) && n.getType() == NodeType.HumanTask));
-        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals(MessagesTest.TEST_NODE_ID_6) && n.getType() == NodeType.HumanTask));
-        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals(MessagesTest.TEST_NODE_ID_7) && n.getType() == NodeType.End));
+        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals("0") && n.getType() == NodeType.Start));
+        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals("2") && n.getType() == NodeType.HumanTask));
+        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals("4") && n.getType() == NodeType.HumanTask));
+        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals("6") && n.getType() == NodeType.HumanTask));
+        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals("7") && n.getType() == NodeType.End));
 
         // Check edges
-        assertTrue(result.getEdges().stream().anyMatch(e -> e.getFrom().equals(MessagesTest.TEST_NODE_ID_0) && e.getTo().equals(MessagesTest.TEST_NODE_ID_2)));
-        assertTrue(result.getEdges().stream().anyMatch(e -> e.getFrom().equals(MessagesTest.TEST_NODE_ID_2) && e.getTo().equals(MessagesTest.TEST_NODE_ID_4)));
-        assertTrue(result.getEdges().stream().anyMatch(e -> e.getFrom().equals(MessagesTest.TEST_NODE_ID_4) && e.getTo().equals(MessagesTest.TEST_NODE_ID_6)));
-        assertTrue(result.getEdges().stream().anyMatch(e -> e.getFrom().equals(MessagesTest.TEST_NODE_ID_6) && e.getTo().equals(MessagesTest.TEST_NODE_ID_7)));
+        assertTrue(result.getEdges().stream().anyMatch(e -> e.getFrom().equals("0") && e.getTo().equals("2")));
+        assertTrue(result.getEdges().stream().anyMatch(e -> e.getFrom().equals("2") && e.getTo().equals("4")));
+        assertTrue(result.getEdges().stream().anyMatch(e -> e.getFrom().equals("4") && e.getTo().equals("6")));
+        assertTrue(result.getEdges().stream().anyMatch(e -> e.getFrom().equals("6") && e.getTo().equals("7")));
     }
 
     @Test
     void testReduceToHumanTasks_MissingStartNode() {
         List<NodeDto> nodes = Arrays.asList(
-            new NodeDto(MessagesTest.TEST_NODE_ID_1, MessagesTest.TEST_NODE_A, NodeType.ServiceTask),
-            new NodeDto(MessagesTest.TEST_NODE_ID_2, MessagesTest.TEST_NODE_B, NodeType.HumanTask),
-            new NodeDto(MessagesTest.TEST_NODE_ID_3, MessagesTest.END_NODE_NAME, NodeType.End)
+            new NodeDto("1", "A", NodeType.ServiceTask),
+            new NodeDto("2", "B", NodeType.HumanTask),
+            new NodeDto("3", "End", NodeType.End)
         );
 
         List<EdgeDto> edges = Arrays.asList(
-            new EdgeDto(MessagesTest.TEST_NODE_ID_1, MessagesTest.TEST_NODE_ID_2),
-            new EdgeDto(MessagesTest.TEST_NODE_ID_2, MessagesTest.TEST_NODE_ID_3)
+            new EdgeDto("1", "2"),
+            new EdgeDto("2", "3")
         );
 
         ProcessDiagramDto input = new ProcessDiagramDto(nodes, edges);
@@ -159,14 +205,14 @@ class DiagramProcessorServiceTest {
     @Test
     void testReduceToHumanTasks_MissingEndNode() {
         List<NodeDto> nodes = Arrays.asList(
-            new NodeDto(MessagesTest.TEST_NODE_ID_0, MessagesTest.START_NODE_NAME, NodeType.Start),
-            new NodeDto(MessagesTest.TEST_NODE_ID_1, MessagesTest.TEST_NODE_A, NodeType.ServiceTask),
-            new NodeDto(MessagesTest.TEST_NODE_ID_2, MessagesTest.TEST_NODE_B, NodeType.HumanTask)
+            new NodeDto("0", "Start", NodeType.Start),
+            new NodeDto("1", "A", NodeType.ServiceTask),
+            new NodeDto("2", "B", NodeType.HumanTask)
         );
 
         List<EdgeDto> edges = Arrays.asList(
-            new EdgeDto(MessagesTest.TEST_NODE_ID_0, MessagesTest.TEST_NODE_ID_1),
-            new EdgeDto(MessagesTest.TEST_NODE_ID_1, MessagesTest.TEST_NODE_ID_2)
+            new EdgeDto("0", "1"),
+            new EdgeDto("1", "2")
         );
 
         ProcessDiagramDto input = new ProcessDiagramDto(nodes, edges);
@@ -196,38 +242,38 @@ class DiagramProcessorServiceTest {
     void testReduceToHumanTasks_DisconnectedHumanTask_RemainsButNoEdges() {
         // Start -> A -> B(human) -> End, plus disconnected human H
         List<NodeDto> nodes = Arrays.asList(
-            new NodeDto(MessagesTest.TEST_NODE_ID_0, MessagesTest.START_NODE_NAME, NodeType.Start),
-            new NodeDto(MessagesTest.TEST_NODE_ID_1, MessagesTest.TEST_NODE_A, NodeType.ServiceTask),
-            new NodeDto(MessagesTest.TEST_NODE_ID_2, MessagesTest.TEST_NODE_B, NodeType.HumanTask),
-            new NodeDto(MessagesTest.TEST_NODE_ID_3, MessagesTest.END_NODE_NAME, NodeType.End),
-            new NodeDto(MessagesTest.TEST_NODE_ID_9, MessagesTest.TEST_NODE_H, NodeType.HumanTask)
+            new NodeDto("0", "Start", NodeType.Start),
+            new NodeDto("1", "A", NodeType.ServiceTask),
+            new NodeDto("2", "B", NodeType.HumanTask),
+            new NodeDto("3", "End", NodeType.End),
+            new NodeDto("9", "H", NodeType.HumanTask)
         );
         List<EdgeDto> edges = Arrays.asList(
-            new EdgeDto(MessagesTest.TEST_NODE_ID_0, MessagesTest.TEST_NODE_ID_1),
-            new EdgeDto(MessagesTest.TEST_NODE_ID_1, MessagesTest.TEST_NODE_ID_2),
-            new EdgeDto(MessagesTest.TEST_NODE_ID_2, MessagesTest.TEST_NODE_ID_3)
+            new EdgeDto("0", "1"),
+            new EdgeDto("1", "2"),
+            new EdgeDto("2", "3")
         );
 
         ProcessDiagramDto input = new ProcessDiagramDto(nodes, edges);
         ProcessDiagramDto result = service.reduceToHumanTasks(input);
 
         // Nodes include disconnected human
-        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals(MessagesTest.TEST_NODE_ID_9) && n.getType() == NodeType.HumanTask));
+        assertTrue(result.getNodes().stream().anyMatch(n -> n.getId().equals("9") && n.getType() == NodeType.HumanTask));
         // Edges do not include disconnected human
-        assertFalse(result.getEdges().stream().anyMatch(e -> e.getFrom().equals(MessagesTest.TEST_NODE_ID_9) || e.getTo().equals(MessagesTest.TEST_NODE_ID_9)));
+        assertFalse(result.getEdges().stream().anyMatch(e -> e.getFrom().equals("9") || e.getTo().equals("9")));
     }
 
     @Test
     void testReduceToHumanTasks_NoPathFromStartToEnd() {
         // No path from start to end; one human exists but unreachable
         List<NodeDto> nodes = Arrays.asList(
-            new NodeDto(MessagesTest.TEST_NODE_ID_0, MessagesTest.START_NODE_NAME, NodeType.Start),
-            new NodeDto(MessagesTest.TEST_NODE_ID_1, MessagesTest.TEST_NODE_A, NodeType.ServiceTask),
-            new NodeDto(MessagesTest.TEST_NODE_ID_2, MessagesTest.TEST_NODE_B, NodeType.HumanTask),
-            new NodeDto(MessagesTest.TEST_NODE_ID_3, MessagesTest.END_NODE_NAME, NodeType.End)
+            new NodeDto("0", "Start", NodeType.Start),
+            new NodeDto("1", "A", NodeType.ServiceTask),
+            new NodeDto("2", "B", NodeType.HumanTask),
+            new NodeDto("3", "End", NodeType.End)
         );
         List<EdgeDto> edges = Arrays.asList(
-            new EdgeDto(MessagesTest.TEST_NODE_ID_1, MessagesTest.TEST_NODE_ID_2) // disconnected from start and end
+            new EdgeDto("1", "2") // disconnected from start and end
         );
 
         ProcessDiagramDto input = new ProcessDiagramDto(nodes, edges);

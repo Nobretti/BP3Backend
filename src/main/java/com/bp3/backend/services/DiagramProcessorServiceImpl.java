@@ -117,23 +117,18 @@ public class DiagramProcessorServiceImpl implements DiagramProcessorService{
             return result;
         }
 
-        // Sort human tasks by ID for consistent ordering
-        List<NodeDto> sortedHumanTasks = reachableHumanTasks.stream()
-                .sorted((a, b) -> a.getId().compareTo(b.getId()))
-                .collect(Collectors.toList());
-
         // Connect start to first human task
-        result.add(new EdgeDto(startNode.getId(), sortedHumanTasks.get(0).getId()));
-        
+        result.add(new EdgeDto(startNode.getId(), reachableHumanTasks.get(0).getId()));
+
         // Connect human tasks in sequence
-        for (int i = 0; i < sortedHumanTasks.size() - 1; i++) {
-            NodeDto current = sortedHumanTasks.get(i);
-            NodeDto next = sortedHumanTasks.get(i + 1);
+        for (int i = 0; i < reachableHumanTasks.size() - 1; i++) {
+            NodeDto current = reachableHumanTasks.get(i);
+            NodeDto next = reachableHumanTasks.get(i + 1);
             result.add(new EdgeDto(current.getId(), next.getId()));
         }
 
         // Connect last human task to end
-        NodeDto lastHumanTask = sortedHumanTasks.get(sortedHumanTasks.size() - 1);
+        NodeDto lastHumanTask = reachableHumanTasks.get(reachableHumanTasks.size() - 1);
         if (hasPath(lastHumanTask.getId(), endNode.getId(), edgesFromMap)) {
             result.add(new EdgeDto(lastHumanTask.getId(), endNode.getId()));
         }
